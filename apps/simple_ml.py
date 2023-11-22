@@ -6,7 +6,9 @@ import numpy as np
 
 import sys
 
-sys.path.append("python/")
+import needle.ops
+
+sys.path.append("/home/tang22/CMU_DLSys/cmu_dlsys_hw1/python")
 import needle as ndl
 
 
@@ -33,7 +35,36 @@ def parse_mnist(image_filesname, label_filename):
                 for MNIST will contain the values 0-9.
     """
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    # 我没做hw0，copy from https://github.com/kcxain/dlsys/blob/master/hw0/src/simple_ml.py
+    f = gzip.open(image_filesname)
+    data = f.read()
+    f.close()
+    h = struct.unpack_from('>IIII', data, 0)
+    offset = struct.calcsize('>IIII')
+    imgNum = h[1]
+    rows = h[2]
+    columns = h[3]
+    pixelString = '>' + str(imgNum * rows * columns) + 'B'
+    pixels = struct.unpack_from(pixelString, data, offset)
+    X = np.reshape(pixels, [imgNum, rows * columns]).astype('float32')
+    X_max = np.max(X)
+    X_min = np.min(X)
+    # X_max = np.max(X, axis=1, keepdims=True)
+    # X_min = np.min(X, axis=1, keepdims=True)
+
+    X_normalized = ((X - X_min) / (X_max - X_min))
+
+    f = gzip.open(label_filename)
+    data = f.read()
+    f.close()
+    h = struct.unpack_from('>II', data, 0)
+    offset = struct.calcsize('>II')
+    num = h[1]
+    labelString = '>' + str(num) + 'B'
+    labels = struct.unpack_from(labelString, data, offset)
+    y = np.reshape(labels, [num]).astype('uint8')
+
+    return (X_normalized, y)
     ### END YOUR SOLUTION
 
 
@@ -54,7 +85,10 @@ def softmax_loss(Z, y_one_hot):
         Average softmax loss over the sample. (ndl.Tensor[np.float32])
     """
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    # combine soft-max and cross-entropy
+    batch_num = Z.shape[0]
+    loss_per_batch = needle.ops.log(needle.ops.exp(Z).sum(axes=(1,))) - (Z * y_one_hot).sum(axes=(1,))
+    return loss_per_batch.sum() / batch_num
     ### END YOUR SOLUTION
 
 
@@ -83,7 +117,26 @@ def nn_epoch(X, y, W1, W2, lr=0.1, batch=100):
     """
 
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    num_examples = X.shape[0]
+    for i in range(0, num_examples, batch):
+        X_batch = X[i: i + batch]
+        y_batch = y[i: i + batch]
+        X_batch = ndl.Tensor(X_batch)
+        Z1 = ndl.ops.relu(X_batch @ W1)
+        Z = Z1 @ W2
+        # get one-hot
+        y_one_hot = np.zeros(Z.shape, dtype="float32")
+        y_one_hot[np.arange(Z.shape[0]), y_batch] = 1
+        loss = softmax_loss(Z, ndl.Tensor(y_one_hot))
+        loss.backward()
+
+        # detach: create a new tensor that shares the data but detaches from the graph(no op and inputs, only has cached data)
+        # create new Tensors for W1 and W2 with these numpy values
+        # 因为更新W的计算: W - lr * grad不应该成为计算图中的内容
+        # 新的W1和W2在新一轮的计算图中还是叶子结点
+        W1 = (W1 - lr * W1.grad).detach()
+        W2 = (W2 - lr * W2.grad).detach()
+    return W1, W2
     ### END YOUR SOLUTION
 
 

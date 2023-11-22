@@ -1,7 +1,7 @@
 import sys
 
-sys.path.append("./python")
-sys.path.append("./apps")
+sys.path.append("/home/tang22/CMU_DLSys/cmu_dlsys_hw1/python")
+sys.path.append("/home/tang22/CMU_DLSys/cmu_dlsys_hw1/apps")
 from simple_ml import *
 import numdifftools as nd
 
@@ -501,6 +501,30 @@ def test_matmul_batched_backward():
         ndl.Tensor(np.random.randn(6, 6, 5, 4)),
         ndl.Tensor(np.random.randn(4, 3)),
     )
+    # add by myself
+    gradient_check(
+        ndl.matmul,
+        ndl.Tensor(np.random.randn(6, 6, 5, 4)),
+        ndl.Tensor(np.random.randn(6, 4, 3)),
+    )
+    # add by myself
+    # gradient_check(
+    #     ndl.matmul,
+    #     ndl.Tensor(np.random.randn(6, 1, 5, 4)),
+    #     ndl.Tensor(np.random.randn(6, 4, 3)),
+    # )
+    # add by myself
+    # gradient_check(
+    #     ndl.matmul,
+    #     ndl.Tensor(np.random.randn(6, 6, 5, 4)),
+    #     ndl.Tensor(np.random.randn(6, 1, 4, 3)),
+    # )
+    # add by myself
+    # gradient_check(
+    #     ndl.matmul,
+    #     ndl.Tensor(np.random.randn(6, 1, 5, 4)),
+    #     ndl.Tensor(np.random.randn(6, 6, 4, 3)),
+    # )
     gradient_check(
         ndl.matmul,
         ndl.Tensor(np.random.randn(5, 4)),
@@ -902,7 +926,8 @@ def test_softmax_loss_ndl():
     gradient_check(ndl.log, ndl.Tensor(1 + np.random.rand(5, 4)))
 
     X, y = parse_mnist(
-        "data/train-images-idx3-ubyte.gz", "data/train-labels-idx1-ubyte.gz"
+        "/home/tang22/CMU_DLSys/cmu_dlsys_hw1/data/train-images-idx3-ubyte.gz",
+        "/home/tang22/CMU_DLSys/cmu_dlsys_hw1/data/train-labels-idx1-ubyte.gz"
     )
     np.random.seed(0)
     Z = ndl.Tensor(np.zeros((y.shape[0], 10)).astype(np.float32))
@@ -1001,7 +1026,8 @@ def test_nn_epoch_ndl():
 
     # test full epoch
     X, y = parse_mnist(
-        "data/train-images-idx3-ubyte.gz", "data/train-labels-idx1-ubyte.gz"
+        "/home/tang22/CMU_DLSys/cmu_dlsys_hw1/data/train-images-idx3-ubyte.gz",
+        "/home/tang22/CMU_DLSys/cmu_dlsys_hw1/data/train-labels-idx1-ubyte.gz"
     )
     np.random.seed(0)
     W1 = ndl.Tensor(np.random.randn(X.shape[1], 100).astype(np.float32) / np.sqrt(100))
