@@ -211,18 +211,19 @@ class BroadcastTo(TensorOp):
         ### BEGIN YOUR SOLUTION
         input_shape = node.inputs[0].shape
         output_shape = self.shape
-        grad_value = out_grad
-        for index, output_value in reversed(list(enumerate(output_shape))):
-            # 例如从1D广播到2D
-            if index + 1 > len(input_shape):
-                # axes should be a tuple
-                grad_value = grad_value.sum(axes=(index,))
-            # 例如从2D广播到2D
-            elif input_shape[index] < output_value:
-                grad_value = grad_value.sum(axes=(index,))
-        # numpy.sum如果不设置keepdims, 会去掉值为1的dim，结果形状出现问题
-        # 直接reshape成输入的形状
-        return grad_value.reshape(shape=input_shape)
+        # numpy的广播策略是将维度先`右`对齐，然后从右往左比较
+        # 所以如果维数增加(如1D->2D)，将input_shape缺失的维度从左开始填1与output_shape对齐
+        tmp_shape = [1] * (len(output_shape) - len(input_shape)) + list(input_shape)
+        dele_shape = []
+        for i in range(len(output_shape)):
+            # 检查每一维是否被扩展
+            if output_shape[i] != tmp_shape[i]:
+                dele_shape.append(i)
+        # 将所有被扩展的维度通过sum压缩回去
+        # tensor sum的实现中，numpy.sum如果不设置keepdims, 会去掉值为1的dim，结果形状出现问题.
+        # 如(1,3) broadcast_to (3,3) sum 却得到 (3,)
+        # 所以最后还需要reshape成输入的形状，以避免上述问题
+        return out_grad.sum(tuple(dele_shape)).reshape(input_shape)
         ### END YOUR SOLUTION
 
 
